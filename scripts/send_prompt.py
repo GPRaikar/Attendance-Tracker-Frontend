@@ -4,6 +4,7 @@ import requests
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_USER_IDS = os.getenv("SLACK_USER_IDS")  # Comma-separated list of user IDs
 
+
 if not SLACK_BOT_TOKEN or not SLACK_USER_IDS:
     raise Exception("Missing SLACK_BOT_TOKEN or SLACK_USER_IDS in environment variables.")
 
