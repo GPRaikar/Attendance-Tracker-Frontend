@@ -60,10 +60,18 @@ block_message_template = {
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": "⏰ You have until *4 PM* to respond. If no response is received, you'll be marked as *On Leave* automatically."
+                    "text": "⏰ You have until *5 PM* to respond. If no response is received, you'll be marked as *On Leave* automatically."
                 }
             ]
+        },
+        {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": "📊 *View your attendance dashboard here:* <https://attendance-tracker-8hty.onrender.com|Attendance Dashboard>"
         }
+        }
+
     ]
 }
 
