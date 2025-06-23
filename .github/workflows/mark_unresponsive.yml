@@ -2,12 +2,13 @@ name: Mark Unresponsive Users
 
 on:
   schedule:
-    - cron: '30 13 * * 1-5'  # 7:00 PM IST, Monday to Friday
+    - cron: '30 13 * * 1-5'  # Runs at 7:00 PM IST (13:30 UTC) Mon–Fri
   workflow_dispatch:
 
 jobs:
   mark-unresponsive:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
