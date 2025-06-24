@@ -2,7 +2,7 @@ name: Mark Unresponsive Users
 
 on:
   schedule:
-    - cron: '30 13 * * 1-5'  # Runs at 7:00 PM IST (13:30 UTC) Mon–Fri
+    - cron: '30 15 * * 1-5'  # Runs at 9:00 PM IST (16:30 UTC) Mon–Fri
   workflow_dispatch:
 
 jobs:
