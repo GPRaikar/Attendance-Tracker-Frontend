@@ -74,7 +74,7 @@ for user_id in user_ids:
             "user_id": user_id,
             "username": username,
             "status": "On Leave",
-            "timestamp": f"{today_str}T16:00:00Z"
+            "timestamp": f"{today_str}T00:00:00Z"
         })
         print(f"⚠️ Marked {user_id} ({username}) as On Leave (no response)")
     else:
