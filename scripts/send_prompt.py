@@ -68,7 +68,7 @@ block_message_template = {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "📊 *View your attendance dashboard here:* <https://attendance-tracker-8hty.onrender.com|Attendance Dashboard>"
+            "text": "📊 *View your attendance dashboard here:* <https://attendance-tracker-backend-sandbox.onrender.com|Attendance Dashboard>"
         }
         }
 
