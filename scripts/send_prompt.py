@@ -60,7 +60,7 @@ block_message_template = {
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": "⏰ You have until *5 PM* to respond. If no response is received, you'll be marked as *On Leave* automatically."
+                    "text": "⏰ You have until *9 PM* to respond. If no response is received, you'll be marked as *On Leave* automatically."
                 }
             ]
         },
