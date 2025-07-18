@@ -68,7 +68,7 @@ block_message_template = {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": "📊 *View your attendance dashboard here:* <https://slack-attendance-tracker.onrender.com|Attendance Dashboard>"
+            "text": "📊 *View your attendance dashboard here:* <https://slack-attendance-tracker-backup.onrender.com|Attendance Dashboard>"
         }
         }
 
