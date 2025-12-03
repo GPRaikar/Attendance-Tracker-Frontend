@@ -34,7 +34,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubunut-latest
     
     steps:
       - name: Checkout code
