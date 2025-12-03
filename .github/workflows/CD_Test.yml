@@ -34,7 +34,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubunut-latest
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
