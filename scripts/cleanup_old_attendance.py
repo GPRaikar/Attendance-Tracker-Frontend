@@ -21,7 +21,7 @@ table = dynamodb.Table(table_name)
 
 def calculate_cutoff_date():
     """Calculate the date 90 days ago from today"""
-    cutoff_date = datetime.utcnow() - timedelta(days=173)
+    cutoff_date = datetime.utcnow() - timedelta(days=90)
     return cutoff_date.isoformat()
 
 def delete_old_records():
