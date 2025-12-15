@@ -3,8 +3,8 @@ name: Monthly Attendance Data Cleanup
 on:
   schedule:
     # Runs on the 1st of every month at 2:00 AM UTC
-    - cron: '0 2 21 * *'
-  workflow_dispatch:  
+    - cron: '0 2 1 * *'
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   cleanup: 
@@ -14,10 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up Python
+      - name:  Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version:  '3.9'
+        with: 
+          python-version: '3.10'
       
       - name: Install dependencies
         run: |
@@ -28,7 +28,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_REGION: ap-south-1
           DYNAMODB_TABLE_NAME:  ${{ secrets.DYNAMODB_TABLE_NAME }}
         run:  |
           python scripts/cleanup_old_attendance.py
@@ -37,6 +37,6 @@ jobs:
         if: success()
         run: echo "✅ Attendance data cleanup completed successfully"
       
-      - name: Log cleanup failure
+      - name:  Log cleanup failure
         if: failure()
         run: echo "❌ Attendance data cleanup failed"
