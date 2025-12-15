@@ -1,0 +1,42 @@
+name: Monthly Attendance Data Cleanup
+
+on:
+  schedule:
+    # Runs on the 1st of every month at 2:00 AM UTC
+    - cron: '0 2 21 * *'
+  workflow_dispatch:  
+
+jobs:
+  cleanup: 
+    runs-on: ubuntu-latest
+    
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version:  '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3
+      
+      - name: Run cleanup script
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DYNAMODB_TABLE_NAME:  ${{ secrets.DYNAMODB_TABLE_NAME }}
+        run:  |
+          python scripts/cleanup_old_attendance.py
+      
+      - name: Log cleanup completion
+        if: success()
+        run: echo "✅ Attendance data cleanup completed successfully"
+      
+      - name: Log cleanup failure
+        if: failure()
+        run: echo "❌ Attendance data cleanup failed"
