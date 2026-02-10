@@ -3,7 +3,7 @@ name: Send Slack Attendance Prompt
 on:
 # push:
   schedule:
-    - cron: '30 2 * * 1-5'  # 8:00 AM IST, Monday to Friday
+    - cron: '30 1 * * 1-5'  # 7:00 AM IST, Monday to Friday
   workflow_dispatch:
 
 jobs:
