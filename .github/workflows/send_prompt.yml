@@ -1,9 +1,8 @@
 name: Send Slack Attendance Prompt
 
 on:
-# push:
   schedule:
-    - cron: '30 0 * * 1-5'  # 6:00 AM IST, Monday to Friday
+    - cron: '30 0 * * 1-5'  # 06:00 IST, Monday to Friday
   workflow_dispatch:
 
 jobs:
@@ -11,18 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+          cache: pip
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      # AWS credentials are needed to check the company holiday table before sending.
       - name: Run send_prompt.py
         run: python scripts/send_prompt.py
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_USER_IDS: ${{ secrets.SLACK_USER_IDS }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DYNAMODB_TABLE_NAME: ${{ secrets.DYNAMODB_TABLE_NAME }}
+          HOLIDAYS_TABLE_NAME: CompanyHolidays
+          APP_TIMEZONE: Asia/Kolkata
+          APP_BASE_URL: https://slack-attendance-tracker-backup.onrender.com

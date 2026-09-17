@@ -1,93 +1,95 @@
-import boto3
-import logging
-from datetime import datetime, timedelta
-import os
-import json
+"""Delete attendance records older than the retention window.
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+Set DRY_RUN=true to report what would be deleted without touching anything.
+Only ever reads and writes the attendance table; holidays and change requests
+live in their own tables and are never scanned.
+"""
+
+import json
+import logging
+import os
+import sys
+from datetime import timedelta
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import common
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Get AWS region from environment variable, default to ap-south-1
-aws_region = os.environ.get('AWS_REGION', 'ap-south-1')
+RETENTION_DAYS = int(os.environ.get("RETENTION_DAYS", "90"))
+DRY_RUN = os.environ.get("DRY_RUN", "false").strip().lower() in ("1", "true", "yes")
 
-# Initialize DynamoDB client with region
-dynamodb = boto3.resource('dynamodb', region_name=aws_region)
-table_name = os.environ.get('DYNAMODB_TABLE_NAME', 'SlackAttendance')
-table = dynamodb.Table(table_name)
 
-def calculate_cutoff_date():
-    """Calculate the date 90 days ago from today"""
-    cutoff_date = datetime.utcnow() - timedelta(days=90)
-    return cutoff_date.isoformat()
+def _scan_all():
+    kwargs = {}
+    table = common.attendance_table()
+    while True:
+        response = table.scan(**kwargs)
+        yield from response.get("Items", [])
+        last_key = response.get("LastEvaluatedKey")
+        if not last_key:
+            return
+        kwargs["ExclusiveStartKey"] = last_key
+
 
 def delete_old_records():
-    """
-    Scan DynamoDB table and delete records older than 90 days
-    Returns count of deleted records
-    """
-    try:
-        cutoff_date = calculate_cutoff_date()
-        deleted_count = 0
-        
-        logger.info(f"Starting cleanup of records older than 90 days (before {cutoff_date})")
-        logger.info(f"Using DynamoDB table: {table_name} in region: {aws_region}")
-        
-        # Scan the table
-        response = table.scan()
-        
-        while True:
-            items = response.get('Items', [])
-            logger.info(f"Found {len(items)} items in this scan batch")
-            
-            for item in items:
-                timestamp = item.get('timestamp')
-                user_id = item.get('user_id')
-                
-                # Compare timestamps (ISO format string comparison works correctly)
-                if timestamp < cutoff_date:
-                    try:
-                        table.delete_item(
-                            Key={
-                                'user_id': user_id,
-                                'timestamp': timestamp
-                            }
-                        )
-                        deleted_count += 1
-                        logger.debug(f"Deleted record:  user_id={user_id}, timestamp={timestamp}")
-                    except Exception as e:
-                        logger.error(f"Error deleting record {user_id}/{timestamp}: {str(e)}")
-                        continue
-            
-            # Check if there are more items to scan
-            if 'LastEvaluatedKey' not in response:
-                break
-            
-            response = table. scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-        
-        logger.info(f"Cleanup completed. Total records deleted: {deleted_count}")
-        return {
-            'statusCode': 200,
-            'body': json. dumps({
-                'message': 'Cleanup successful',
-                'deleted_records': deleted_count
-            })
-        }
-    
-    except Exception as e: 
-        logger.error(f"Error during cleanup: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'message': 'Cleanup failed',
-                'error':  str(e)
-            })
-        }
+    if common.ATTENDANCE_TABLE in (common.HOLIDAYS_TABLE, os.environ.get("CHANGE_REQUESTS_TABLE_NAME")):
+        raise SystemExit("Refusing to run: DYNAMODB_TABLE_NAME points at a non-attendance table.")
 
-if __name__ == '__main__': 
-    # Run the cleanup
+    cutoff = common.today() - timedelta(days=RETENTION_DAYS)
+    # ISO-8601 date prefixes compare correctly as plain strings.
+    cutoff_key = f"{cutoff.isoformat()}T00:00:00"
+
+    logger.info("Table %s in %s", common.ATTENDANCE_TABLE, common.AWS_REGION)
+    logger.info("Deleting records before %s (%s days)", cutoff, RETENTION_DAYS)
+    if DRY_RUN:
+        logger.info("DRY_RUN is on; nothing will be deleted.")
+
+    table = common.attendance_table()
+    deleted = skipped = 0
+
+    try:
+        for item in _scan_all():
+            user_id = item.get("user_id")
+            timestamp = item.get("timestamp")
+            if not user_id or not timestamp:
+                skipped += 1
+                continue
+            if str(timestamp) >= cutoff_key:
+                continue
+
+            deleted += 1
+            if DRY_RUN:
+                logger.info("would delete %s / %s", user_id, timestamp)
+                continue
+            try:
+                table.delete_item(Key={"user_id": user_id, "timestamp": timestamp})
+            except Exception as error:  # noqa: BLE001 - one bad row must not stop the sweep
+                deleted -= 1
+                logger.error("could not delete %s/%s: %s", user_id, timestamp, error)
+    except Exception as error:  # noqa: BLE001
+        logger.error("Cleanup failed: %s", error)
+        return {"statusCode": 500, "body": json.dumps({"message": "Cleanup failed", "error": str(error)})}
+
+    logger.info("Done. %s record(s) %s, %s malformed row(s) skipped.",
+                deleted, "would be deleted" if DRY_RUN else "deleted", skipped)
+    return {
+        "statusCode": 200,
+        "body": json.dumps(
+            {
+                "message": "Cleanup successful",
+                "dry_run": DRY_RUN,
+                "deleted_records": deleted,
+                "skipped_records": skipped,
+                "cutoff": cutoff.isoformat(),
+            }
+        ),
+    }
+
+
+if __name__ == "__main__":
     result = delete_old_records()
     print(json.dumps(result, indent=2))
+    raise SystemExit(0 if result["statusCode"] == 200 else 1)
