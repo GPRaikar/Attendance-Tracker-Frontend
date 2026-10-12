@@ -2,11 +2,21 @@ import os
 import requests
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
-SLACK_USER_IDS = os.getenv("SLACK_USER_IDS")  # Comma-separated list of user IDs
+# SLACK_USER_IDS = os.getenv("SLACK_USER_IDS")  # Comma-separated list of user IDs
 
+SLACK_USER_IDS = [
+    "U224TR5QU",    # Adarsh
+    "U072YU9DJ4C",  # Nagraj
+    "U05AM6K923B",  # Reejesh
+    "U07AH9RCE4W",  # Samhitha
+    "U07AGSC7GMU",  # Prathvi
+    "U05KM0U9M7B",  # Raja
+    "U07ASUK0M8C",  # Guruprasad
+    "U05GQA7FG7N",  # Shubha
+]
 
-if not SLACK_BOT_TOKEN or not SLACK_USER_IDS:
-    raise Exception("Missing SLACK_BOT_TOKEN or SLACK_USER_IDS in environment variables.")
+if not SLACK_BOT_TOKEN:
+    raise Exception("Missing SLACK_BOT_TOKEN in environment variables.")
 
 headers = {
     "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
@@ -65,13 +75,12 @@ block_message_template = {
             ]
         },
         {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "📊 *View your attendance dashboard here:* <https://slack-attendance-tracker-backup.onrender.com|Attendance Dashboard>"
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "📊 *View your attendance dashboard here:* <https://slack-attendance-tracker-backup.onrender.com|Attendance Dashboard>"
+            }
         }
-        }
-
     ]
 }
 
@@ -90,13 +99,12 @@ def send_prompt(user_id):
 
 
 def main():
-    user_ids = [uid.strip() for uid in SLACK_USER_IDS.split(",") if uid.strip()]
-    if not user_ids:
-        print("⚠️ No valid user IDs found in SLACK_USER_IDS.")
+    if not SLACK_USER_IDS:
+        print("⚠️ No user IDs configured in SLACK_USER_IDS.")
         return
 
-    print(f"📨 Sending prompts to {len(user_ids)} user(s)...")
-    for uid in user_ids:
+    print(f"📨 Sending prompts to {len(SLACK_USER_IDS)} user(s)...")
+    for uid in SLACK_USER_IDS:
         send_prompt(uid)
 
 
